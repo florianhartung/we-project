@@ -59,11 +59,6 @@ pub struct MandelbrotExplorer {
 
     is_mouse_held_down: bool,
     previous_mouse_position: Option<Vector2<f32>>,
-    // last_fps_measurement_time: Instant,
-    // current_fps_measurement_frame_counter: usize,
-    time: u32,
-    time_buffer: wgpu::Buffer,
-    time_bind_group: wgpu::BindGroup,
 }
 
 impl MandelbrotExplorer {
@@ -71,13 +66,15 @@ impl MandelbrotExplorer {
     pub async fn new_from_canvas(
         size: (u32, u32),
         canvas: web_sys::HtmlCanvasElement,
+        vsync: bool,
     ) -> Result<Self> {
-        Self::new(size, SurfaceTarget::Canvas(canvas)).await
+        Self::new(size, SurfaceTarget::Canvas(canvas), vsync).await
     }
 
     pub async fn new(
         size: (u32, u32),
         surface: impl Into<wgpu::SurfaceTarget<'static>>,
+        vsync: bool,
     ) -> Result<Self> {
         let instance = wgpu::Instance::new(InstanceDescriptor {
             #[cfg(target_arch = "wasm32")]
@@ -130,39 +127,17 @@ impl MandelbrotExplorer {
             format: surface_format,
             width: size.0,
             height: size.1,
-            present_mode: wgpu::PresentMode::AutoNoVsync,
+            present_mode: if vsync {
+                wgpu::PresentMode::AutoVsync
+            } else {
+                wgpu::PresentMode::AutoNoVsync
+            },
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };
 
         surface.configure(&device, &surface_config);
-
-        let time: u32 = 0;
-        let time_buffer = device.create_buffer_init(&BufferInitDescriptor {
-            label: None,
-            contents: bytemuck::cast_slice(&[time]),
-            usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
-        });
-
-        let time_bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
-            label: None,
-            entries: &[BindGroupLayoutEntry {
-                binding: 0,
-                visibility: ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None },
-                count: None,
-            }],
-        });
-
-        let time_bind_group = device.create_bind_group(&BindGroupDescriptor {
-            label: None,
-            layout: &time_bind_group_layout,
-            entries: &[BindGroupEntry {
-                binding: 0,
-                resource: time_buffer.as_entire_binding(),
-            }]
-        });
 
         let camera = Camera {
             center: Vector2::new(0.0, 0.0),
@@ -200,7 +175,7 @@ impl MandelbrotExplorer {
 
         let render_pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
             label: None,
-            bind_group_layouts: &[&camera_bind_group_layout, &time_bind_group_layout],
+            bind_group_layouts: &[&camera_bind_group_layout],
             push_constant_ranges: &[],
         });
 
@@ -264,32 +239,12 @@ impl MandelbrotExplorer {
             // last_fps_measurement_time: Instant::now(),
             // current_fps_measurement_frame_counter: 0,
             surface_config,
-            time,
-            time_buffer,
-            time_bind_group,
         })
     }
 
-    pub fn increment_time(&mut self) {
-        self.time += 1;
-    }
-
     pub fn render(&mut self) {
-        // self.current_fps_measurement_frame_counter += 1;
-        // if self.current_fps_measurement_frame_counter == 30 {
-        //     let now = Instant::now();
-        //     let dt = now.duration_since(self.last_fps_measurement_time);
-        //     self.last_fps_measurement_time = now;
-        //     let fps = self.current_fps_measurement_frame_counter as f32 / dt.as_secs_f32();
-        //     self.current_fps_measurement_frame_counter = 0;
-        //     self.window.set_title(&format!("FPS: {fps:.0}"));
-        // }
-
         self.queue
             .write_buffer(&self.camera_buffer, 0, bytemuck::cast_slice(&[self.camera]));
-
-        self.queue
-            .write_buffer(&self.time_buffer, 0, bytemuck::cast_slice(&[self.time]));
 
         let output = self.surface.get_current_texture().unwrap();
         let view = output
@@ -323,7 +278,6 @@ impl MandelbrotExplorer {
 
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
-            render_pass.set_bind_group(1, &self.time_bind_group, &[]);
 
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.draw(0..(QUAD_VERTS.len() as u32), 0..1);

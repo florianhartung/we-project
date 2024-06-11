@@ -15,14 +15,14 @@ pub fn Mandelbrot() -> impl IntoView {
     let mandelbrot: RwSignal<Option<MandelbrotExplorer>> = create_rw_signal(None);
 
     // Create renderer
-    #[cfg(target_arch = "wasm32")] // This is needed (idk why??)
+    #[cfg(target_arch = "wasm32")] // WTF? Why is this is necessary :(
     create_effect(move |_| {
         if let Some(canvas) = canvas_ref.get() {
             leptos::logging::log!("spawing local future");
             spawn_local(async move {
                 leptos::logging::log!("spawing local future");
                 let canvas = canvas.deref().clone();
-                let mut new_mandelbrot = MandelbrotExplorer::new_from_canvas((800, 600), canvas)
+                let mut new_mandelbrot = MandelbrotExplorer::new_from_canvas((800, 600), canvas, true)
                     .await
                     .unwrap();
 

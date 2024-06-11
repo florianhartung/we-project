@@ -12,7 +12,7 @@ fn main() {
     let window = Arc::new(Window::new(&event_loop).unwrap());
 
     let window_size = (window.inner_size().width, window.inner_size().height);
-    let mut mandelbrot = MandelbrotExplorer::new(window_size, window.clone())
+    let mut mandelbrot = MandelbrotExplorer::new(window_size, window.clone(), false)
         .block_on()
         .unwrap();
 
@@ -44,7 +44,6 @@ fn main() {
                     WindowEvent::RedrawRequested => {
                         if last_inc.elapsed() > Duration::from_millis(16) {
                             last_inc = Instant::now();
-                            mandelbrot.increment_time();
                         }
 
                         if counter == 200 {

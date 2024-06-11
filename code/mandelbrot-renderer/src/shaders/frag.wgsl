@@ -1,9 +1,11 @@
+const MAX_ITERATIONS: u32 = 400;
+const SMOOTH_SHADING: bool = true;
+const CUSTOM_ADDITIONAL_COLORS: bool = true;
+
 struct Camera {
     position: vec2<f32>,
     size: vec2<f32>,
 }
-
-const MAX_ITERATIONS: u32 = 420;
 
 @group(0)
 @binding(0)
@@ -34,38 +36,71 @@ fn main(vertex: VertexInput) -> @location(0) vec4<f32> {
         color += vec3(0.1, 0.0, 0.0);
     }
 
-    if iterations == MAX_ITERATIONS {
+    if u32(floor(iterations)) == MAX_ITERATIONS {
         color = vec3(0.0);
     } else {
         // iterations = (iterations + time) % MAX_ITERATIONS;
 
-        color = color_palette(iterations);
-        let relative_iterations = f32(iterations) / f32(MAX_ITERATIONS);
-        color += vec3(0.4 * relative_iterations, 0.4 * relative_iterations, 0.0);
-        color += vec3(0.0, 0.0, 0.6 - relative_iterations);
-        color += vec3(0.3 * sin(position.y), 0.0, 0.3 * sin(position.y));
+        let color1 = color_palette(u32(floor(iterations)));
+        let color2 = color_palette(u32(floor(iterations)) + 1);
+        
+        let fract: f32 = iterations % 1;
+        color = color1 * (1.0 - fract) + color2 * fract;
+
+        if (CUSTOM_ADDITIONAL_COLORS) {
+            let relative_iterations = iterations / f32(MAX_ITERATIONS);
+            color += vec3(0.4 * relative_iterations, 0.1 * relative_iterations, 0.0);
+            color += vec3(0.0, 0.0, 0.6 - relative_iterations);
+            color += vec3(0.3 * sin(position.y), 0.0, 0.3 * sin(position.y));
+        }
     }
 
 
     return vec4<f32>(color, 1.0);
 }
 
-
-fn mandelbrot(position: vec2<f32>, max_iterations: u32) -> u32 {
+fn mandelbrot(position: vec2<f32>, max_iterations: u32) -> f32 {
     var x0: f32 = position.x;
     var y0: f32 = position.y;
+
+    // Bulb check
+    let q = (x0 - 0.25) * (x0 - 0.25) + y0 * y0;
+    let left = q * (q + (x0 - 0.25));
+    let right = 0.25 * y0 * y0;
+    if (left <= right) {
+        return f32(max_iterations);
+    }
+
     var x: f32 = 0.0;
     var y: f32 = 0.0;
+    var x2: f32 = 0.0;
+    var y2: f32 = 0.0;
     var i: u32 = 0;
 
-    while (x*x + y*y <= 2.0*2.0 && i < max_iterations) {
-        let xtemp: f32 = x*x - y*y + x0;
-        y = 2*x*y + y0;
-        x = xtemp;
+    var escape_time: f32;
+    if (SMOOTH_SHADING) {
+        escape_time = 1000.0;
+    } else {
+        escape_time = 4.0;
+    }
+
+    while (x2 + y2 <= escape_time && i < max_iterations) {
+        y = (x + x) * y + y0;
+        x = x2 - y2 + x0;
+        x2 = x * x;
+        y2 = y * y;
         i += u32(1);
     }
 
-    return i;
+    if (SMOOTH_SHADING) {
+        // Compute fractional iteration count for smooth shading
+        let log_zn = log(x2 + y2) / 2.0;
+        let nu = log(log_zn / log(2.0)) / log(2.0);
+
+        return f32(i) + 1.0 - nu;
+    }
+
+    return f32(i);
 }
 
 fn color_palette(i: u32) -> vec3<f32> {
