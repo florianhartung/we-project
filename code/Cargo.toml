@@ -1,0 +1,3 @@
+[workspace]
+members = ["mandelbrot-renderer", "mandelguessr"]
+resolver = "2"
