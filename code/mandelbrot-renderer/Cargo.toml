@@ -40,3 +40,4 @@ web-sys = { version = "0.3", features = [
 [dev-dependencies]
 pollster = "0.3"
 winit = "0.29"
+cgmath = { git = "https://github.com/rustgd/cgmath", rev = "d5e765db61cf9039cb625a789a59ddf6b6ab2337" }

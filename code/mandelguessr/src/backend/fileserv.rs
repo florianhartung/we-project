@@ -1,4 +1,3 @@
-use crate::app::App;
 use axum::response::Response as AxumResponse;
 use axum::{
     body::Body,
@@ -9,12 +8,18 @@ use axum::{
 use leptos::*;
 use tower::ServiceExt;
 use tower_http::services::ServeDir;
+use tracing::{span, Level};
 
-pub async fn file_and_error_handler(
-    State(options): State<LeptosOptions>,
+use super::state::AppState;
+
+pub async fn file_and_error_handler<IV: IntoView>(
+    State(app_state): State<AppState>,
     req: Request<Body>,
+    app_fn: impl Fn() -> IV + Clone + Send + 'static,
 ) -> AxumResponse {
-    let root = options.site_root.clone();
+    let span = span!(Level::DEBUG, "file_and_error_handler");
+    let _guard = span.enter();
+    let root = app_state.leptos_options.site_root.clone();
     let (parts, body) = req.into_parts();
 
     let mut static_parts = parts.clone();
@@ -32,7 +37,12 @@ pub async fn file_and_error_handler(
     if res.status() == StatusCode::OK {
         res.into_response()
     } else {
-        let handler = leptos_axum::render_app_to_stream(options.to_owned(), App);
+        let handler = leptos_axum::render_app_to_stream_with_context(app_state.leptos_options.clone(), move || {
+            let span = span!(Level::DEBUG, "provide_context_file_handler");
+            let guard = span.enter();
+            provide_context(app_state.clone());
+            drop(guard);
+        },app_fn);
         handler(Request::from_parts(parts, body))
             .await
             .into_response()

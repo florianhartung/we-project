@@ -7,13 +7,7 @@ use anyhow::Result;
 use bytemuck::{Pod, Zeroable};
 use cgmath::{ElementWise, Vector2};
 use wgpu::{
-    include_wgsl,
-    util::{BufferInitDescriptor, DeviceExt},
-    vertex_attr_array, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BufferUsages, ColorTargetState, ColorWrites, FragmentState,
-    InstanceDescriptor, InstanceFlags, MultisampleState, PipelineCompilationOptions,
-    PipelineLayoutDescriptor, PrimitiveState, RenderPipelineDescriptor, ShaderStages, Surface,
-    SurfaceTarget, VertexBufferLayout, VertexState,
+    include_wgsl, util::{BufferInitDescriptor, DeviceExt}, vertex_attr_array, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BufferDescriptor, BufferUsages, ColorTargetState, ColorWrites, FragmentState, InstanceDescriptor, InstanceFlags, MultisampleState, PipelineCompilationOptions, PipelineLayoutDescriptor, PrimitiveState, RenderPipelineDescriptor, ShaderStages, Surface, SurfaceTarget, VertexBufferLayout, VertexState
 };
 
 #[repr(C)]
@@ -38,7 +32,7 @@ impl Vertex {
     }
 }
 
-pub struct MandelbrotExplorer {
+pub struct MandelbrotRenderer {
     instance: wgpu::Instance,
     surface: wgpu::Surface<'static>,
     surface_config: wgpu::SurfaceConfiguration,
@@ -50,18 +44,13 @@ pub struct MandelbrotExplorer {
 
     vertex_buffer: wgpu::Buffer,
 
-    camera: Camera,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
-    current_size_exponent: f32,
 
     render_pipeline: wgpu::RenderPipeline,
-
-    is_mouse_held_down: bool,
-    previous_mouse_position: Option<Vector2<f32>>,
 }
 
-impl MandelbrotExplorer {
+impl MandelbrotRenderer {
     #[cfg(target_arch = "wasm32")]
     pub async fn new_from_canvas(
         size: (u32, u32),
@@ -139,15 +128,11 @@ impl MandelbrotExplorer {
 
         surface.configure(&device, &surface_config);
 
-        let camera = Camera {
-            center: Vector2::new(0.0, 0.0),
-            size: Vector2::new(1.0, 1.0),
-        };
-
-        let camera_buffer = device.create_buffer_init(&BufferInitDescriptor {
+        let camera_buffer = device.create_buffer(&BufferDescriptor {
             label: None,
-            contents: bytemuck::cast_slice(&[camera]),
+            size: mem::size_of::<Camera>() as u64,
             usage: BufferUsages::COPY_DST | BufferUsages::UNIFORM,
+            mapped_at_creation: false, 
         });
 
         let camera_bind_group_layout =
@@ -229,27 +214,29 @@ impl MandelbrotExplorer {
             queue,
             current_window_size: size,
             vertex_buffer,
-            camera,
             camera_buffer,
             camera_bind_group,
-            current_size_exponent: 0.0,
             render_pipeline,
-            is_mouse_held_down: false,
-            previous_mouse_position: None,
-            // last_fps_measurement_time: Instant::now(),
-            // current_fps_measurement_frame_counter: 0,
             surface_config,
         })
     }
 
-    pub fn render(&mut self) {
+    pub fn render(&mut self, camera_center: (f32, f32), camera_size: (f32, f32)) {
+        // Update camera
+        let camera = Camera {
+            center: Vector2::from(camera_center),
+            size: Vector2::from(camera_size),
+        };
         self.queue
-            .write_buffer(&self.camera_buffer, 0, bytemuck::cast_slice(&[self.camera]));
+            .write_buffer(&self.camera_buffer, 0, bytemuck::cast_slice(&[camera]));
 
+        // Get render target texture
         let output = self.surface.get_current_texture().unwrap();
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
+
+        // Render to texture
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -283,7 +270,7 @@ impl MandelbrotExplorer {
             render_pass.draw(0..(QUAD_VERTS.len() as u32), 0..1);
         }
 
-        // submit will accept anything that implements IntoIter
+        // Submit and present
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
     }
@@ -295,40 +282,6 @@ impl MandelbrotExplorer {
             self.surface_config.height = height;
             self.surface.configure(&self.device, &self.surface_config);
         }
-    }
-
-    /// Mouse press and release event
-    pub fn on_mouse_click(&mut self, is_down: bool) {
-        self.is_mouse_held_down = is_down;
-    }
-
-    /// `delta` is lines scrolled
-    pub fn on_mouse_wheel(&mut self, delta: f32) {
-        // TODO zoom in where mouse currently is
-        self.current_size_exponent = (self.current_size_exponent - delta).max(-80.0).min(10.0);
-
-        let size = 1.1_f32.powf(self.current_size_exponent);
-        self.camera.size = Vector2::new(size, size);
-    }
-
-    /// `new_position` is in pixels
-    pub fn on_mouse_move(&mut self, new_position: (f32, f32)) {
-        let position = Vector2::from(new_position);
-        if self.is_mouse_held_down {
-            if let Some(previous_mouse_position) = self.previous_mouse_position {
-                let delta = previous_mouse_position - position;
-                let window_size = Vector2::new(
-                    self.current_window_size.0 as f32,
-                    self.current_window_size.1 as f32,
-                );
-                let mut delta_normalized = delta.div_element_wise(window_size);
-
-                delta_normalized = delta_normalized.mul_element_wise(Vector2::new(2.0, -2.0));
-
-                self.camera.center += delta_normalized.mul_element_wise(self.camera.size);
-            }
-        }
-        self.previous_mouse_position = Some(position);
     }
 }
 

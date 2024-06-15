@@ -1,10 +1,15 @@
-use crate::error_template::{AppError, ErrorTemplate};
-use leptos::*;
-use leptos_meta::*;
-use leptos_router::*;
-use mandelbrot::Mandelbrot;
+use leptos::{component, view, Errors, IntoView};
+use leptos_meta::{provide_meta_context, Stylesheet, Title};
+use leptos_router::{Route, Router, Routes, SsrMode};
 
-pub mod mandelbrot;
+use crate::app::{
+    components::{TechStackItem, TechStackList, Mandelbrot},
+    error_template::{AppError, ErrorTemplate},
+};
+use components::ServerCounter;
+
+mod components;
+mod error_template;
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -12,11 +17,9 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
 
     view! {
-
-
         // injects a stylesheet into the document <head>
         // id=leptos means cargo-leptos will hot-reload this stylesheet
-        <Stylesheet id="leptos" href="/pkg/we-project.css"/>
+        <Stylesheet id="leptos" href="/pkg/mandelguessr.css"/>
 
         // sets the document title
         <Title text="Welcome to Leptos"/>
@@ -32,7 +35,7 @@ pub fn App() -> impl IntoView {
         }>
             <main>
                 <Routes>
-                    <Route path="" view=HomePage/>
+                    <Route path="" view=HomePage ssr=SsrMode::PartiallyBlocked/> // use PartiallyBlocked to allow certain resources to still be blocking during SSR. This could be needed for authentication?
                 </Routes>
             </main>
         </Router>
@@ -42,13 +45,35 @@ pub fn App() -> impl IntoView {
 /// Renders the home page of your application.
 #[component]
 fn HomePage() -> impl IntoView {
-    // Creates a reactive value to update the button
-    let (count, set_count) = create_signal(0);
-    let on_click = move |_| set_count.update(|count| *count += 1);
+    let tech_stack_items = vec![
+        TechStackItem::new("Leptos", "https://leptos.dev/"),
+        TechStackItem::new("Axum", "https://github.com/tokio-rs/axum"),
+        TechStackItem::new("Diesel ORM", "https://diesel.rs/"),
+        TechStackItem::new("PostgreSQL", "https://www.postgresql.org/axum"),
+        TechStackItem::new("TailwindCSS", "https://tailwindcss.com/"),
+    ];
 
     view! {
-        <h1>"Welcome to Leptos!"</h1>
-        <button on:click=on_click>"Click Me: " {count}</button>
-        <Mandelbrot />
+        <div class="flex flex-col items-center space-y-8 text-lg py-4">
+            <h1 class="text-3xl">"Welcome to my Rust fullstack template!👋"</h1>
+
+            <p class="text-sm w-96 whitespace-normal">
+                "This template is quite opinion based.
+                It provides the fundamental parts needed for a fullstack webapp with custom components and a database connection.
+                A general source code folder structure is also provided."
+            </p >
+
+            <div>
+                Used technologies
+                <TechStackList items=tech_stack_items />
+            </div>
+
+            <div class="flex flex-col items-center">
+                This is a counter whose state is tracked by the server:
+                <ServerCounter />
+            </div>
+
+            <Mandelbrot size=(400, 300) />
+        </div>
     }
 }
