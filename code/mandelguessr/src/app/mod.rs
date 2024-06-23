@@ -1,4 +1,6 @@
-use leptos::{component, view, Errors, IntoView};
+use std::ops::Range;
+
+use leptos::{component, create_rw_signal, view, Errors, IntoView};
 use leptos_meta::{provide_meta_context, Stylesheet, Title};
 use leptos_router::{Route, Router, Routes, SsrMode};
 
@@ -6,7 +8,7 @@ use crate::app::{
     components::{TechStackItem, TechStackList, Mandelbrot},
     error_template::{AppError, ErrorTemplate},
 };
-use components::ServerCounter;
+use components::{MandelbrotBounds, ServerCounter};
 
 mod components;
 mod error_template;
@@ -53,6 +55,9 @@ fn HomePage() -> impl IntoView {
         TechStackItem::new("TailwindCSS", "https://tailwindcss.com/"),
     ];
 
+    let position = create_rw_signal((0.0, 0.0));
+    let zoom_exponent = create_rw_signal(0.0);
+
     view! {
         <div class="flex flex-col items-center space-y-8 text-lg py-4">
             <h1 class="text-3xl">"Welcome to my Rust fullstack template!👋"</h1>
@@ -73,7 +78,12 @@ fn HomePage() -> impl IntoView {
                 <ServerCounter />
             </div>
 
-            <Mandelbrot size=(400, 300) />
+            <div class="rounded-md shadow-sm overflow-hidden">
+                <Mandelbrot size=(400, 300) position zoom_exponent position_bounds=MANDELBROT_POSITION_BOUNDS zoom_exponent_bounds=0.0..3.0/>
+            </div>
         </div>
     }
 }
+
+
+const MANDELBROT_POSITION_BOUNDS: (Range<f32>, Range<f32>) = (-2.0..0.5, -1.2..1.2);

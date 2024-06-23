@@ -73,7 +73,7 @@ site-pkg-dir = "pkg"
 # The tailwind input file.
 #
 # Optional, Activates the tailwind build
-tailwind-input-file = "input.css"
+tailwind-input-file = "style/input.css"
 
 # The tailwind config file.
 #
