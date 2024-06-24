@@ -4,8 +4,9 @@ use leptos::{
     create_node_ref, create_rw_signal, create_server_action, html::Canvas, view, IntoView,
     RwSignal, SignalGet, SignalSet, SignalUpdate, SignalWith,
 };
-use leptos::{create_signal, spawn_local, HtmlElement, MaybeSignal};
+use leptos::{create_signal, spawn_local, HtmlElement, MaybeSignal, SignalGetUntracked};
 use mandelbrot_renderer::MandelbrotRenderer;
+use tailwind_fuse::tw_join;
 use std::ops::RangeBounds;
 use std::{ops::Deref, time::Duration};
 
@@ -81,11 +82,12 @@ pub fn Mandelbrot<RX: MandelbrotBounds, RY: MandelbrotBounds, RZ: MandelbrotBoun
             spawn_local(async move {
                 leptos::logging::log!("spawing local future");
                 let canvas = canvas.deref().clone();
-                let mut new_mandelbrot = MandelbrotRenderer::new_from_canvas((800, 600), canvas, true)
+                let size = size.get_untracked();
+                let mut new_mandelbrot = MandelbrotRenderer::new_from_canvas((size.0, size.1), canvas, true)
                     .await
                     .unwrap();
 
-                new_mandelbrot.render(camera_position.get(), camera_size());
+                new_mandelbrot.render(camera_position.get_untracked(), camera_size());
 
                 mandelbrot.set(Some(new_mandelbrot));
                 leptos::logging::log!("set mandelbrot state");
@@ -110,6 +112,15 @@ pub fn Mandelbrot<RX: MandelbrotBounds, RY: MandelbrotBounds, RZ: MandelbrotBoun
         .unwrap();
     });
 
+    create_effect(move |_| {
+        let size = size.get();
+        mandelbrot.update(|renderer| {
+            if let Some(renderer) = renderer {
+                renderer.resize((size.0, size.1));
+            }
+        });
+    });
+
     #[allow(unused)]
     let mut non_passive_wheel = leptos::ev::Custom::<leptos::ev::WheelEvent>::new("wheel");
     #[cfg(feature = "hydrate")] {
@@ -131,8 +142,13 @@ pub fn Mandelbrot<RX: MandelbrotBounds, RY: MandelbrotBounds, RZ: MandelbrotBoun
     }
 
 
+    let class = move || {
+        let size = size.get();
+        tw_join!(class, format!("w-[{}px] h-[{}px]", size.0, size.1))
+    };
+
     view! {
-        <canvas ref=canvas_ref class
+        <canvas ref=canvas_ref class=class
         on:mousedown=move |event: MouseEvent| {
             if event.button() == 0 { // Main button
                 set_is_mouse_down.set(true);
@@ -160,14 +176,17 @@ pub fn Mandelbrot<RX: MandelbrotBounds, RY: MandelbrotBounds, RZ: MandelbrotBoun
                     delta = (delta.0 / size.0 as f32, delta.1 / size.1 as f32);
 
                     // Apply necessary transformations to make up for different coordinate systems
-                    delta = (delta.0, -1.0 * delta.1);
+                    delta = (2.0 * delta.0, -2.0 * delta.1);
 
                     // Distance moved is proportionhal to camera size
                     let camera_size = camera_size();
                     delta = (delta.0 * camera_size.0, delta.1 * camera_size.1);
 
                     set_camera_position.update(|camera_position| {
+                        // Add delta
                         *camera_position = (camera_position.0 + delta.0, camera_position.1 + delta.1);
+
+                        // Limit camera position to be inside specified bounds
                         let position_bounds = position_bounds.get();
                         *camera_position = (position_bounds.0.limit_value(camera_position.0), position_bounds.1.limit_value(camera_position.1));
                     });
@@ -176,6 +195,6 @@ pub fn Mandelbrot<RX: MandelbrotBounds, RY: MandelbrotBounds, RZ: MandelbrotBoun
 
             set_previous_mouse_position.set(Some(position));
         }
-        width="800px" height="600px"> </canvas>
+        width=move || format!("{}px", size.get().0) height=move || format!("{}px", size.get().1)> </canvas>
     }
 }

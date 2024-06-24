@@ -1,6 +1,7 @@
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
+    dotenvy::dotenv().unwrap();
     mandelguessr::backend::start_server().await;
 }
 

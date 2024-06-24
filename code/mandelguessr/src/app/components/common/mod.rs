@@ -3,5 +3,7 @@
 //! One such provided example is a configurable pill button (styled with Tailwind).
 
 mod pill_button;
-
 pub use pill_button::*;
+
+mod mandelbrot;
+pub use mandelbrot::*;

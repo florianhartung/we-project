@@ -8,9 +8,3 @@ pub mod common;
 
 mod server_counter;
 pub use server_counter::*;
-
-mod tech_stack_list;
-pub use tech_stack_list::*;
-
-mod mandelbrot;
-pub use mandelbrot::*;

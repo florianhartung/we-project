@@ -1,14 +1,13 @@
 use std::ops::Range;
 
-use leptos::{component, create_rw_signal, view, Errors, IntoView};
+use leptos::{component, create_memo, create_node_ref, create_rw_signal, view, Errors, IntoView, Signal, SignalGet};
 use leptos_meta::{provide_meta_context, Stylesheet, Title};
+use leptos_use::{use_element_size, UseElementSizeReturn};
+use leptos::html::Div;
 use leptos_router::{Route, Router, Routes, SsrMode};
 
-use crate::app::{
-    components::{TechStackItem, TechStackList, Mandelbrot},
-    error_template::{AppError, ErrorTemplate},
-};
-use components::{MandelbrotBounds, ServerCounter};
+use crate::app::error_template::{AppError, ErrorTemplate};
+use components::common::{Mandelbrot, MandelbrotBounds};
 
 mod components;
 mod error_template;
@@ -47,40 +46,18 @@ pub fn App() -> impl IntoView {
 /// Renders the home page of your application.
 #[component]
 fn HomePage() -> impl IntoView {
-    let tech_stack_items = vec![
-        TechStackItem::new("Leptos", "https://leptos.dev/"),
-        TechStackItem::new("Axum", "https://github.com/tokio-rs/axum"),
-        TechStackItem::new("Diesel ORM", "https://diesel.rs/"),
-        TechStackItem::new("PostgreSQL", "https://www.postgresql.org/axum"),
-        TechStackItem::new("TailwindCSS", "https://tailwindcss.com/"),
-    ];
-
     let position = create_rw_signal((0.0, 0.0));
     let zoom_exponent = create_rw_signal(0.0);
 
+
     view! {
-        <div class="flex flex-col items-center space-y-8 text-lg py-4">
-            <h1 class="text-3xl">"Welcome to my Rust fullstack template!👋"</h1>
-
-            <p class="text-sm w-96 whitespace-normal">
-                "This template is quite opinion based.
-                It provides the fundamental parts needed for a fullstack webapp with custom components and a database connection.
-                A general source code folder structure is also provided."
-            </p >
-
-            <div>
-                Used technologies
-                <TechStackList items=tech_stack_items />
-            </div>
-
-            <div class="flex flex-col items-center">
-                This is a counter whose state is tracked by the server:
-                <ServerCounter />
-            </div>
-
-            <div class="rounded-md shadow-sm overflow-hidden">
-                <Mandelbrot size=(400, 300) position zoom_exponent position_bounds=MANDELBROT_POSITION_BOUNDS zoom_exponent_bounds=0.0..3.0/>
-            </div>
+        <div class="rounded-md w-[800px] h-[600px]">
+            <Mandelbrot
+                size=(800, 600) position zoom_exponent
+                position_bounds=MANDELBROT_POSITION_BOUNDS
+                zoom_exponent_bounds=0.0..3.0
+                class="rounded-sm shadow-sm"
+                />
         </div>
     }
 }

@@ -18,6 +18,8 @@ http = "1"
 cfg-if = "1"
 tailwind_fuse = "0.3"
 mandelbrot-renderer = { path = "../mandelbrot-renderer" }
+serde = "1"
+leptos-use = "0.10"
 
 # SSR dependencies
 axum = { version = "0.7", features = ["macros", "tracing"], optional = true }
@@ -30,6 +32,8 @@ tower-http = { version = "0.5", features = [
     "trace",
 ], optional = true }
 tracing-subscriber = { version = "0.3", optional = true }
+diesel = { version = "2.0", features = ["postgres", "r2d2"] }
+dotenvy = "0.15"
 
 # Hydration dependencies
 console_error_panic_hook = {version = "0.1", optional = true}
@@ -49,6 +53,7 @@ ssr = [
     "leptos_router/ssr",
     # "dep:tracing",
     "dep:tracing-subscriber",
+    "leptos-use/ssr"
 ]
 
 # Defines a size-optimized profile for the WASM bundle in release mode
@@ -73,7 +78,7 @@ site-pkg-dir = "pkg"
 # The tailwind input file.
 #
 # Optional, Activates the tailwind build
-tailwind-input-file = "style/input.css"
+tailwind-input-file = "input.css"
 
 # The tailwind config file.
 #
@@ -94,12 +99,6 @@ site-addr = "127.0.0.1:3000"
 
 # The port to use for automatic reload monitoring
 reload-port = 3001
-
-# [Optional] Command to use when running end2end tests. It will run in the end2end dir.
-#   [Windows] for non-WSL use "npx.cmd playwright test"
-#   This binary name can be checked in Powershell with Get-Command npx
-end2end-cmd = "npx playwright test"
-end2end-dir = "end2end"
 
 #  The browserlist query used for optimizing the CSS.
 browserquery = "defaults"
