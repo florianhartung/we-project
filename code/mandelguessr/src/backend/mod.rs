@@ -11,7 +11,6 @@ use tower_http::catch_panic::CatchPanicLayer;
 use tracing::level_filters::LevelFilter;
 
 pub mod database;
-pub mod models;
 pub mod state;
 mod fileserv;
 

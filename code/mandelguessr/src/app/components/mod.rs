@@ -6,5 +6,5 @@
 
 pub mod common;
 
-mod server_counter;
-pub use server_counter::*;
+pub mod logout_button;
+pub use logout_button::*;

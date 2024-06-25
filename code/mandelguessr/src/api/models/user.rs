@@ -12,7 +12,7 @@ pub struct User {
 impl User {
     pub fn new_validated(username: String, password: String) -> Result<Self, String> {
         if password.len() < 8 {
-            return Err("Password must be atleast 8 characters long".to_owned());
+            return Err("Das Passwort muss min. 8 Zeichen lang sein.".to_owned());
         }
 
         Ok(Self { username, password })

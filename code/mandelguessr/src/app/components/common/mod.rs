@@ -7,3 +7,6 @@ pub use pill_button::*;
 
 mod mandelbrot;
 pub use mandelbrot::*;
+
+mod login_register;
+pub use login_register::*;

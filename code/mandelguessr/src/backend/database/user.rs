@@ -3,7 +3,7 @@ use diesel::{
     SelectableHelper,
 };
 
-use crate::backend::models::user::User;
+use crate::api::models::user::User;
 
 use super::DatabaseError;
 
@@ -12,7 +12,6 @@ use super::DatabaseError;
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[allow(dead_code)]
 struct DbUser {
-    id: i32,
     username: String,
     password: String,
 }
