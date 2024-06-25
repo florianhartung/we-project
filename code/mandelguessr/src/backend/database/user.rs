@@ -34,7 +34,7 @@ pub fn create_user(
         password: String,
     }
 
-    let db_user = DbNewUser { username, password };
+    let db_user = DbNewUser { username, password: format!("{:X}", md5::compute(&password)) };
 
     let db_user: DbUser = diesel::insert_into(super::schema::users::table)
         .values(&db_user)

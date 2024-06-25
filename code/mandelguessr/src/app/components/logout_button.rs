@@ -1,12 +1,12 @@
 use leptos::{
-    component, create_action, create_effect, html::Button, use_context, view, IntoView, SignalGet,
+    component, create_action, create_effect, html::Button, use_context, view, Callable, Callback, IntoView, SignalGet
 };
 use leptos_router::{use_navigate, ActionForm, Form};
 
-use crate::{api};
+use crate::api;
 
 #[component]
-pub fn LogoutButton() -> impl IntoView {
+pub fn LogoutButton(#[prop(into)] on_click: Callback<()>) -> impl IntoView {
     let logout_action = create_action(|&()| async move {
             api::auth::logout_action().await
         });
@@ -18,13 +18,12 @@ pub fn LogoutButton() -> impl IntoView {
     create_effect(move |_| {
         if should_redirect() {
             navigate("/", Default::default());
+            on_click.call(());
         }
     });
     view! {
-        <button class="border-2 border-black rounded-sm" on:click=move |_| {
-            logout_action.dispatch(());
-        }>
-            "Logout"
+        <button on:click=move |_| logout_action.dispatch(()) class="bg-[#600070] rounded-full h-full py-1 px-8">
+            "Abmelden"
         </button>
     }
 }

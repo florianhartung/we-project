@@ -8,3 +8,6 @@ pub mod common;
 
 pub mod logout_button;
 pub use logout_button::*;
+
+pub mod game;
+pub use game::*;

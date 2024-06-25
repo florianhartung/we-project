@@ -1,4 +1,4 @@
-use leptos::{component, create_server_action, create_signal, view, IntoView, SignalGet};
+use leptos::{component, create_effect, create_server_action, create_signal, view, Callable, Callback, IntoView, SignalGet};
 use leptos_router::{ActionForm, A};
 
 use crate::app::components::common::{SubmitButton, TextInputField};
@@ -17,15 +17,11 @@ pub fn Register() -> impl IntoView {
     };
 
     view! {
-        <h1 class="flex justify-center text-4xl">
-            // <AppHeader/>
-        </h1>
-
         <div class="w-full flex flex-row justify-center">
             <ActionForm class="w-80 p-6 space-y-4" action=register_action>
-                <h1 class="text-xl">Register</h1>
+                <h1 class="text-xl text-white">Registrierung</h1>
 
-                <TextInputField input_name="username" label="Benutername" placeholder="Max Mustermann" />
+                <TextInputField input_name="username" label="Benutername" placeholder="mustermann123" />
                 <TextInputField input_name="password" label="Passwort" is_password=true />
                 <TextInputField input_name="repeat_password" label="Passwort wiederholen" is_password=true />
                 <SubmitButton label="Registrieren" />
@@ -34,9 +30,6 @@ pub fn Register() -> impl IntoView {
                     Zum Login
                 </A>
                 <br/>
-                <A class="text-blue-700 underline" href="/">
-                    Zurück zur Hauptseite 
-                </A>
             </ActionForm>
         </div>
     }

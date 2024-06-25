@@ -27,7 +27,7 @@ pub enum SignupResponse {
 }
 
 #[cfg(feature = "ssr")]
-async fn read_current_user_from_headers() -> Option<String> {
+pub async fn read_current_user_from_headers() -> Option<String> {
     use http::HeaderMap;
 
     leptos_axum::extract::<HeaderMap>()
@@ -125,7 +125,7 @@ pub async fn login_action(
         }
     };
 
-    if user.password != password {
+    if user.password != format!("{:X}", md5::compute(password)) {
         response_options.set_status(StatusCode::FORBIDDEN);
         return Ok(LoginResponse::IncorrectUserdata(()));
     }

@@ -12,13 +12,13 @@ pub fn TextInputField(
         .unwrap_or("text");
 
     view! {
-        <label class="flex flex-col">
+        <label class="flex flex-col text-white">
             {label}
             <input
                 type=input_type
                 name=input_name
                 placeholder=placeholder
-                class="border-2 border-black rounded-sm shadow-sm placeholder:text-gray-400 p-2"
+                class="bg-gray-600 border-2 border-gray-700 rounded-md shadow-sm placeholder:text-black/50 p-2"
             />
         </label>
     }
@@ -32,7 +32,7 @@ pub fn SubmitButton(
     view! {
         <input
             type="submit"
-            class="bg-gray-200 border-black border-2 rounded-sm shadow-sm hover:bg-slate-200 px-6 py-2"
+            class="bg-gray-400 border-white rounded-full border-2 shadow-sm hover:bg-gray-600 px-6 py-2 text-white"
             value=label
         />
     }

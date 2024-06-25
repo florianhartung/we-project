@@ -144,7 +144,7 @@ pub fn Mandelbrot<RX: MandelbrotBounds, RY: MandelbrotBounds, RZ: MandelbrotBoun
 
     let class = move || {
         let size = size.get();
-        tw_join!(class, format!("w-[{}px] h-[{}px]", size.0, size.1))
+        tw_join!(class, "cursor-pointer active:cursor-move")
     };
 
     view! {

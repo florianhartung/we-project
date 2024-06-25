@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use leptos::{
-    component, create_action, create_effect, create_resource, create_server_action, create_signal, server, view, ErrorBoundary, IntoView, MaybeProp, MaybeSignal, ServerFnError, SignalGet, TextProp
+    component, create_action, create_effect, create_resource, create_server_action, create_signal, Callable, server, view, Callback, ErrorBoundary, IntoView, MaybeProp, MaybeSignal, ServerFnError, SignalGet, TextProp
 };
 use leptos_router::{ActionForm, A};
 
@@ -26,17 +26,17 @@ pub fn Login() -> impl IntoView {
 
 
     view! {
-        <h1 class="flex justify-center text-4xl">
-            // <AppHeader/>
-        </h1>
 
         // center form horizontally
         <div class="w-full flex flex-row justify-center">
+
             <ActionForm class="w-80 p-6 space-y-4" action=login_action>
+                <h1 class="text-xl text-white">Anmeldung</h1>
+
                 <TextInputField
                     input_name="username"
                     label="Benutzername"
-                    placeholder="Max Mustermann"
+                    placeholder="mustermann123"
                 />
                 <TextInputField input_name="password" label="Passwort" is_password=true/>
                 <SubmitButton label="Anmelden" />
@@ -45,9 +45,6 @@ pub fn Login() -> impl IntoView {
                     Zur Registrierung
                 </A>
                 <br/>
-                <A class="text-blue-700 underline" href="/">
-                    Zurück zur Hauptseite
-                </A>
             </ActionForm>
         </div>
     }

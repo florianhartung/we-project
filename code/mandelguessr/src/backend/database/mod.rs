@@ -8,6 +8,7 @@ use diesel::{r2d2::{self, ConnectionManager}, PgConnection};
 
 mod schema;
 pub mod user;
+pub mod games;
 
 
 pub fn create_connection_pool() -> r2d2::Pool<ConnectionManager<PgConnection>>{
